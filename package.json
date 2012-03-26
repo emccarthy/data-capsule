@@ -12,7 +12,8 @@
   },
   "devDependencies": {
     "connect":  "*",
-    "dispatch": "*"
+    "dispatch": "*",
+    "node-uuid": "*"
   },
   "main": "lib/data-capsule",
   "files": [
