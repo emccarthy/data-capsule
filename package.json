@@ -1,0 +1,29 @@
+{
+  "name": "data-capsule",
+  "description": "Simple data synchronizing web service",
+  "keywords": ["data","sync","web","service"],
+  "version": "0.0.1",
+  "homepage": "https://github.com/rjrodger/data-capsule",
+  "author": "Richard Rodger <richard@ricebridge.com> (http://richardrodger.com/)",
+  "contributors": [
+    "Richard Rodger <richard@ricebridge.com> (http://richardrodger.com/)"
+  ],
+  "dependencies": {
+  },
+  "devDependencies": {
+    "connect":  "*",
+    "dispatch": "*"
+  },
+  "main": "lib/data-capsule",
+  "files": [
+    "README",
+    "lib/data-capsule.js"
+  ],
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": { "type" : "git", "url" : "https://github.com/rjrodger/data-capsule.git" },
+  "engines": {
+    "node": ">=0.6"
+  }
+}
