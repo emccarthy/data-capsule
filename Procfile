@@ -1,2 +1,4 @@
-web: node lib/server.js 8181
+web: node lib/server.js $PORT
+
+
 
