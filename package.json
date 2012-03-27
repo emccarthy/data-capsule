@@ -10,10 +10,10 @@
   ],
   "dependencies": {
     "dispatch": "*",
-    "node-uuid": "*"
+    "node-uuid": "*",
+    "connect": "1.8.6"
   },
   "devDependencies": {
-    "connect": "*",
     "request": "*"
   },
   "main": "lib/data-capsule",
