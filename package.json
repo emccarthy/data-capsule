@@ -9,11 +9,12 @@
     "Richard Rodger <richard@ricebridge.com> (http://richardrodger.com/)"
   ],
   "dependencies": {
-  },
-  "devDependencies": {
-    "connect":  "*",
     "dispatch": "*",
     "node-uuid": "*"
+  },
+  "devDependencies": {
+    "connect": "*",
+    "request": "*"
   },
   "main": "lib/data-capsule",
   "files": [
