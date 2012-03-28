@@ -3,7 +3,8 @@
 <head> 
   <title>Test</title> 
   <script src="js/jquery.js"></script>
-  <script src="js/server-test.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/data-capsule-client.js"></script>
 </head> 
 <body> 
 <p>
@@ -11,7 +12,13 @@ Open the Web Inspector Console, and try:
 </p>
 
 <code>
-http.get('/api/ping')<br />
+http.get('/api/ping',printjson)<br />
+http.post('/capsule/rest/001/entry/app=sdc',{type:'income',from:'2012-04',amount:10000},printjson)<br />
+http.post('/capsule/rest/001/entry/app=sdc',{type:'income',from:'2012-05',amount:15000},printjson)<br />
+http.get('/capsule/rest/001/entry/app=sdc',printjson)
+http.get('/capsule/sync/001/entry/app=sdc/version',printjson)
+http.get('/capsule/sync/001/entry/app=sdc/history/0',printjson)
+http.get('/capsule/sync/001/entry/app=sdc/updates/0',printjson)
 </code>
 
 </body>
