@@ -160,7 +160,6 @@ function DataCapsule( opt ) {
           store.setItem(version_key,''+self.version)
           store.setItem(ids_key,JSON.stringify(self.item_ids))
           var out = {down:update_ids,up:change_ids,ids:server_ids,version:self.version}
-          console.log(out)
           cb && cb(out)
         }
       }

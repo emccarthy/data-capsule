@@ -61,8 +61,6 @@ bb.init = function() {
     },
 
     calcdeath: function(){
-      //console.log('calcdeath')
-
       var self = this
       var death = new Date()
       self.sortlist(function(list){
@@ -78,7 +76,6 @@ bb.init = function() {
           balance += (('expend'==entry.type?-1:1) * entry.amount)
 
           if( last_type == entry.type ) {
-            console.log('last '+(('expend'==last_type?1:-1) * ('expend'==last_type?last_income:last_expend)))
             balance += (('expend'==last_type?1:-1) * ('expend'==last_type?last_income:last_expend))
           }
 
@@ -98,7 +95,7 @@ bb.init = function() {
             last_income = entry.amount
           }
 
-          //console.log('bal='+balance+' e='+JSON.stringify(entry)+' lt='+last_type+' le='+last_expend+' li='+last_income)
+
         }
 
         if( 0 < balance ) {
@@ -221,6 +218,10 @@ bb.init = function() {
           if( err) return console.log(err);
 
           entry.amount = parseInt(input_amount.val(),10)
+          if( isNaN(entry.amount) ) {
+            entry.amount = 0
+            input_amount.val(0)
+          }
 
           app.dc.save(entry,function(err){
             if( err) return console.log(err);
