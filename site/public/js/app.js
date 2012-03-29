@@ -278,7 +278,7 @@ app.erroralert = function( error ) {
 app.init = function() {
   app.dc = new DataCapsule({
     prefix:'capsule',
-    acc:'3b9c3f5b-19fa-4a76-899e-26dd1929dc9f',
+    acc:'001',
     coll:'entry',
     spec:'app=sdc',
     makeid: function(item) {
@@ -296,10 +296,7 @@ app.init = function() {
   app.view.clock.render()
 
   app.view.income = new bb.view.EntryList('income')
-  //app.view.income.render()
-
   app.view.expend = new bb.view.EntryList('expend')
-  //app.view.expend.render()
 
   app.start()
 }
