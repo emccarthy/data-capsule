@@ -1,12 +1,38 @@
 
 
-
-
-var i = 0
+var MONTH = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
 var app = {
   model: {},
   view: {},
+  util: {
+    ym: function(monthspec) {
+      var month = monthspec % 100
+      var year  = (monthspec - month) / 100
+      return [year,month]
+    },
+    monthend: function(monthspec) {
+      var ym = app.util.ym(monthspec)
+      return new Date(ym[0],ym[1]-1,31)
+    },
+    incmonth: function(monthspec) {
+      var ym = app.util.ym(monthspec)
+      ym[1]++
+      if( 12 < ym[1] ) {
+        ym[0]++
+        ym[1] = 1
+      }
+      return (ym[0]*100)+ym[1]
+    },
+    thismonth: function() {
+      var d = new Date()
+      return (d.getFullYear()*100)+d.getMonth()+1
+    },
+    formatmonth: function(monthspec) {
+      var ym = app.util.ym(monthspec)
+      return MONTH[ym[1]-1]+' '+ym[0]
+    }
+  }
 }
 
 var bb = {
@@ -21,249 +47,226 @@ bb.init = function() {
     defaults: {
       content: 'none'
     },
+
+    initialize: function( items ) {
+      var self = this
+      _.bindAll(self)
+      self.on('entry-update',self.calcdeath)
+    },
+
+    init: function(){
+      var self = this
+      var death = new Date()
+      self.set({death:death})
+    },
+
+    calcdeath: function(){
+      //console.log('calcdeath')
+
+      var self = this
+      var death = new Date()
+      self.sortlist(function(list){
+        var balance = 0
+        var last_income = 0
+        var last_expend = 0
+        var last_month_date
+        var last_type
+
+        for( var i = 0; i < list.length; i++ ) {
+          var entry = list[i]
+
+          balance += (('expend'==entry.type?-1:1) * entry.amount)
+
+          if( last_type == entry.type ) {
+            console.log('last '+(('expend'==last_type?1:-1) * ('expend'==last_type?last_income:last_expend)))
+            balance += (('expend'==last_type?1:-1) * ('expend'==last_type?last_income:last_expend))
+          }
+
+          if( balance <= 0 ) {
+            death = app.util.monthend(entry.month)
+            self.set({death:death})
+            break
+          }
+
+          last_month_date = app.util.monthend(entry.month)
+          last_type = entry.type
+
+          if( 'expend'==entry.type ) {
+            last_expend = entry.amount
+          }
+          else {
+            last_income = entry.amount
+          }
+
+          //console.log('bal='+balance+' e='+JSON.stringify(entry)+' lt='+last_type+' le='+last_expend+' li='+last_income)
+        }
+
+        if( 0 < balance ) {
+          var maxmillislife = 5 * 365 * 24 * 60 * 60 * 1000
+          var millislife = maxmillislife
+
+          if( last_income < last_expend ) {
+            var coverm = balance / (last_expend-last_income);
+            var millislife = Math.min(maxmillislife,coverm * 30 * 24 * 60 * 60 * 1000)
+          }
+        
+          death = last_month_date ? new Date( last_month_date.getTime()+millislife ) : death
+          self.set({death:death})
+        }
+
+      })
+    },
+
+    sortlist: function(cb) {
+      app.dc.list({},function(err,list){
+        if( err ) return console.log(err);
+        list.sort(function(a,b){
+          if( a.month == b.month ) {
+            return 'income'==a.type?-1:1;
+          }
+          else return a.month - b.month;
+        })
+
+        cb( list )
+      })
+    }
   })
 
 
-  bb.view.Navigation = Backbone.View.extend({    
+  bb.view.Clock = Backbone.View.extend({    
     initialize: function( items ) {
       var self = this
       _.bindAll(self)
 
+      app.model.state.on('change:death',self.render)
+    },
+
+    render: function() {
+      var death = app.model.state.get('death')
+
+      $('#deathbg1').show();
+      $('#death').countdown('destroy');
+      $('#death').countdown({until: death, format:'yowdhms', compact:false, layout:$('#ymwd_tm').html()});
+      $('#death1').countdown('destroy');
+      $('#death1').countdown({until: death, format:'yowdhms', compact:false, layout:$('#hms_tm').html()});
+    }
+  })
+
+
+  bb.view.EntryList = Backbone.View.extend({    
+    initialize: function( type ) {
+      var self = this
+      _.bindAll(self)
+
+      $('#'+type+'_more').tap(function(){self.addmonth()})
+
       self.elem = {
-        header: $("#header"),
-        footer: $("#footer")
+        list: $('#'+type+'_list'),
+        entry_tm: $('#entry_tm'),
       }
 
-      self.elem.header.css({zIndex:1000})
-      self.elem.footer.css({zIndex:1000})
+      self.type = type
 
-      function handletab(tabname) {
-        return function(){
-          app.model.state.set({current:tabname})
+      app.model.state.on('entry-update',self.render)
+    },
+
+    render: function() {
+      var self = this
+
+      app.model.state.sortlist(function(list){
+        self.elem.list.empty().hide()
+
+        for( var i = 0; i < list.length; i++ ) {
+          var entry = list[i]
+          if( entry.type === self.type ) {
+            app.view[entry.type].rendermonth(entry)
+          }
+        }
+
+        self.elem.list.show()
+      })
+    },
+
+
+    addmonth: function( entry ) {
+      var self = this
+
+      if( !entry ) {
+        if( self.last ) { 
+          entry = {month:app.util.incmonth(self.last.month),amount:0,type:self.type}
+        }
+        else {
+          return;
         }
       }
 
-      var tabindex = 0
-      for( var tabname in app.tabs ) {
-        console.log(tabname)
-        $("#tab_"+tabname).tap(handletab(tabname))
-      }
+      app.dc.save(entry,function(err,entry){
+        if( err) return console.log(err);
 
-      app.scrollheight = window.innerHeight - self.elem.header.height() - self.elem.footer.height()
-      if( 'android' == app.platform ) {
-        app.scrollheight += self.elem.header.height()
-      }
-    },
-
-    render: function() {
-    }
-  })
-
-
-  bb.view.Content = Backbone.View.extend({    
-    initialize: function( initialtab ) {
-      var self = this
-      _.bindAll(self)
-
-      self.current = initialtab
-      self.scrollers = {}
-
-      app.model.state.on('change:current',self.tabchange)
-
-      window.onresize = function() {
-        self.render()
-      }
-
-      app.model.state.on('scroll-refresh',function(){
-        self.render()
+        self.rendermonth( entry )
+        app.model.state.trigger('entry-update')
+        app.dc.sync()
       })
     },
 
-    render: function() {
+    rendermonth: function( entry ) {
       var self = this
 
-      app.view[self.current] && app.view[self.current].render()
+      var entry_div = self.elem.entry_tm.clone()
+      entry_div.find('.monthentry').text( app.util.formatmonth(entry.month) )
+      var input_amount = entry_div.find('.amount')
 
-      var content = $("#content_"+self.current)
-      if( !self.scrollers[self.current] ) {
-        self.scrollers[self.current] = new iScroll("content_"+self.current)      
-      }
+      input_amount.val(entry.amount).attr({id:self.type+'_'+entry.id}).blur(function(event){
+        app.dc.load(entry.id, function(err,entry) {
+          if( err) return console.log(err);
 
-      content.height( app.scrollheight ) 
+          entry.amount = parseInt(input_amount.val(),10)
 
-      setTimeout( function() {
-        self.scrollers[self.current].refresh()
-      },300 )
-    },
+          app.dc.save(entry,function(err){
+            if( err) return console.log(err);
 
-    tabchange: function() {
-      var self = this
-
-      var previous = self.current
-      var current = app.model.state.get('current')
-      console.log( 'tabchange prev='+previous+' cur='+current)
-
-      $("#content_"+previous).hide().removeClass('leftin').removeClass('rightin')
-      $("#content_"+current).show().addClass( app.tabs[previous].index <= app.tabs[current].index ?'leftin':'rightin')
-      self.current = current
-
-      self.render()
-    }
-  })
-
-
-  bb.view.Sense = Backbone.View.extend({
-    initialize: function() {
-      var self = this
-      _.bindAll(self)
-
-      self.elem = {
-        accel_watch_btn: $('#sense_accel_watch'),
-        accel_stop_btn:  $('#sense_accel_stop'),
-        accel_x: $('#sense_accel_x'),
-        accel_y: $('#sense_accel_y'),
-        accel_z: $('#sense_accel_z'),
-        accel_x_val: $('#sense_accel_x_val'),
-        accel_y_val: $('#sense_accel_y_val'),
-        accel_z_val: $('#sense_accel_z_val'),
-
-        button: $('#sense_button')
-      }
-
-      self.elem.accel_watch_btn.tap(function(){
-        self.watchID = navigator.accelerometer.watchAcceleration(self.update_accel,app.erroralert,{frequency:10})
+            self.rendermonth( entry )
+            app.model.state.trigger('entry-update')
+            app.dc.sync()
+          })
+        })
       })
 
-      self.elem.accel_stop_btn.tap(function(){
-        self.watchID && navigator.accelerometer.clearWatch(self.watchID)
-      })
-
-      function call_update_button(name) {
-        return function() { self.update_button(name) }
-      }
-
-      document.addEventListener("backbutton", call_update_button('back'))
-      document.addEventListener("menubutton", call_update_button('menu'))
-      document.addEventListener("searchbutton", call_update_button('search'))
-    },
-
-    render: function() {
-    },
-
-    update_accel: function(data) {
-      var self = this
-      self.elem.accel_x.css({marginLeft:data.x<0?70+(70*data.x):70, width:Math.abs(70*data.x)})
-      self.elem.accel_y.css({marginLeft:data.y<0?70+(70*data.y):70, width:Math.abs(70*data.y)})
-      self.elem.accel_z.css({marginLeft:data.z<0?70+(70*data.z):70, width:Math.abs(70*data.z)})
-      self.elem.accel_x_val.text(data.x)
-      self.elem.accel_y_val.text(data.y)
-      self.elem.accel_z_val.text(data.z)
-    },
-
-    update_button: function(name) {
-      var self = this
-      self.elem.button.text(name)
+      self.elem.list.append(entry_div.children()).trigger("create")
+      self.last = entry
     }
   })
-
-
-  bb.view.Capture = Backbone.View.extend({
-    initialize: function() {
-      var self = this
-      _.bindAll(self)
-
-      self.elem = {
-        image_btn: $('#capture_image'),
-        video_btn: $('#capture_video'),        
-        audio_btn: $('#capture_audio'),
-        image_play: $('#capture_image_play'),
-        video_play: $('#capture_video_play'),        
-        audio_play: $('#capture_audio_play'),        
-      }
-
-      self.elem.image_btn.tap(function(){
-        navigator.device.capture.captureImage(function(mediafiles){
-          self.elem.image_play.attr({src:'file://'+mediafiles[0].fullPath})
-          app.model.state.trigger('scroll-refresh')
-        },app.erroralert)
-      })
-
-      self.elem.video_btn.tap(function(){
-        navigator.device.capture.captureVideo(function(mediafiles){
-          self.elem.video_play.show().attr({href:'file://'+mediafiles[0].fullPath})
-          app.model.state.trigger('scroll-refresh')
-        },app.erroralert)
-      })
-
-      self.elem.audio_btn.tap(function(){
-        navigator.device.capture.captureAudio(function(mediafiles){
-          self.elem.audio_play.show().attr({href:'file://'+mediafiles[0].fullPath})
-          app.model.state.trigger('scroll-refresh')
-        },app.erroralert)
-      })
-
-    },
-    render: function() {
-    }
-  })
-
-  bb.view.Status = Backbone.View.extend({
-    initialize: function() {
-      var self = this
-      _.bindAll(self)
-
-      self.elem = {
-      }
-    },
-    render: function() {
-    }
-  })
-
-  bb.view.Storage = Backbone.View.extend({
-    initialize: function() {
-      var self = this
-      _.bindAll(self)
-
-      self.elem = {
-      }
-    },
-    render: function() {
-    }
-  })
-
-  bb.view.PhoneGap = Backbone.View.extend({
-    initialize: function() {
-      var self = this
-      _.bindAll(self)
-
-      self.elem = {
-        name: $('#phonegap_name'),
-	phonegap: $('#phonegap_phonegap'),
-	platform: $('#phonegap_platform'),
-	uuid: $('#phonegap_uuid'),
-	version: $('#phonegap_version'),
-      }
-    },
-
-    render: function() {
-      var self = this
-      self.elem.name.text(device.name)
-      self.elem.phonegap.text(device.phonegap)
-      self.elem.platform.text(device.platform)
-      self.elem.uuid.text(device.uuid)
-      self.elem.version.text(device.version)
-    }
-  })
-
 }
 
 
 app.boot = function() {
-  document.ontouchmove = function(e){ e.preventDefault(); }
+  //document.ontouchmove = function(e){ e.preventDefault(); }
 }
 
 app.start = function() {
+  var trigger_entry_update = function(){app.model.state.trigger('entry-update')}
+  app.dc.init(trigger_entry_update)
 
+  if( !localStorage.installtime ) {
+    localStorage.installtime = ''+new Date().getTime()
+
+    var thismonth = app.util.thismonth()
+    var nextmonth = app.util.incmonth( thismonth )
+
+    app.view.income.addmonth({month:thismonth,amount:30000,type:'income'})
+    app.view.income.addmonth({month:nextmonth,amount:0,type:'income'})
+    app.view.expend.addmonth({month:thismonth,amount:10000,type:'expend'})
+  }
+
+  app.dc.sync(trigger_entry_update)
+
+  setInterval(function(){
+    app.dc.sync(trigger_entry_update)
+  },60000)
+
+  $(document).bind("pagechange", function(){
+    app.dc.sync(trigger_entry_update)
+  })
 }
 
 app.erroralert = function( error ) {
@@ -272,29 +275,32 @@ app.erroralert = function( error ) {
 
 
 app.init = function() {
-  console.log('start init')
+  app.dc = new DataCapsule({
+    prefix:'capsule',
+    acc:'3b9c3f5b-19fa-4a76-899e-26dd1929dc9f',
+    coll:'entry',
+    spec:'app=sdc',
+    makeid: function(item) {
+      return item.month+'_'+item.type
+    }
+  })
 
-  /*
+
   bb.init()
 
   app.model.state = new bb.model.State()
+  app.model.state.init()
 
-  app.view.navigation = new bb.view.Navigation(app.initialtab)
-  app.view.navigation.render()
+  app.view.clock = new bb.view.Clock()
+  app.view.clock.render()
 
-  app.view.content = new bb.view.Content(app.initialtab)
-  app.view.content.render()
+  app.view.income = new bb.view.EntryList('income')
+  //app.view.income.render()
 
-  app.view.sense    = new bb.view.Sense()
-  app.view.capture  = new bb.view.Capture()
-  app.view.status   = new bb.view.Status()
-  app.view.storage  = new bb.view.Storage()
-  app.view.phonegap = new bb.view.PhoneGap()
-  */
+  app.view.expend = new bb.view.EntryList('expend')
+  //app.view.expend.render()
 
   app.start()
-
-  console.log('end init')
 }
 
 

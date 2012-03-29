@@ -17,8 +17,8 @@ h3 {
     margin: 15px 0px 5px 0px;
 }
 
-div.month {
-  padding: 10px !important;
+div.monthentry {
+  padding: 10px 0px !important;
 }
 
 input.amount {
@@ -33,7 +33,7 @@ div.clock {
   height:73px;
 
   background-color: #600; 
-  background-image: url(shiny.png);
+  background-image: url(../img/shiny.png);
   background-position: 0% 0%;
   background-repeat: repeat-x;
   background-size: 100% 55%;    
@@ -53,7 +53,7 @@ div.digits div.second { margin-left: 45px; }
 
 #death div.sep { width: 11px; height: 31px; float: left;}
 death div.sep { width: 11px; height: 50px; background-color:#FFFFFF; float: left;}
-#death div { width: 21px; height: 31px; background: url(digits.png) no-repeat 0px 0px; float: left; }
+#death div { width: 21px; height: 31px; background: url(../img/digits.png) no-repeat 0px 0px; float: left; }
 #death div.d1 { background-position: -0px 0px;}
 #death div.d2 { background-position: -21px 0px;}
 #death div.d3 { background-position: -42px 0px;}
@@ -69,7 +69,7 @@ death div.sep { width: 11px; height: 50px; background-color:#FFFFFF; float: left
 
 #death1 div.sep { width: 11px; height: 31px; float: left;}
 death1 div.sep { width: 11px; height: 50px; background-color:#FFFFFF; float: left;}
-#death1 div { width: 21px; height: 31px; background: url(digits.png) no-repeat 0px 0px; float: left; }
+#death1 div { width: 21px; height: 31px; background: url(../img/digits.png) no-repeat 0px 0px; float: left; }
 #death1 div.d1 { background-position: -0px 0px;}
 #death1 div.d2 { background-position: -21px 0px;}
 #death1 div.d3 { background-position: -42px 0px;}
@@ -82,7 +82,7 @@ death1 div.sep { width: 11px; height: 50px; background-color:#FFFFFF; float: lef
 #death1 div.d0 { background-position: -189px 0px;}
 
 div.labels { clear: left; position:relative; top:10px;}
-div.labels div { height: 20px; background: url(labels.png) no-repeat 0px 0px; float: left; }
+div.labels div { height: 20px; background: url(../img/labels.png) no-repeat 0px 0px; float: left; }
 div.labels div.year   { background-position:  -80px 0px; width:64px; margin-left:  5px; }
 div.labels div.month  { background-position: -198px 0px; width:76px; margin-left: 10px; }
 div.labels div.week   { background-position: -290px 0px; width:63px; margin-left: 10px; }

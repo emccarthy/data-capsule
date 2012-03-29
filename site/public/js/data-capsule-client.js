@@ -1,7 +1,12 @@
 
 
-function DataCapsule( prefix,acc,coll,spec ) {
+function DataCapsule( opt ) {
   var self = {}
+
+  var prefix = opt.prefix
+  var acc    = opt.acc
+  var coll   = opt.coll
+  var spec   = opt.spec
 
   var store = localStorage
   var rest_base = prefix+'/rest/'+acc+'/'+coll+'/'+spec
@@ -37,36 +42,37 @@ function DataCapsule( prefix,acc,coll,spec ) {
   var version_key = self.key('~version')
   
 
-  self.init = function() {
+  self.init = function(cb) {
     self.item_ids = JSON.parse( store.getItem(ids_key) || '[]' )
     self.changes  = JSON.parse( store.getItem(changes_key) || '{}' )
     self.version  = parseInt( store.getItem(version_key), 10 )
     if( isNaN(self.version) ) {
       self.version = -1
     }
+    cb && cb()
   }
 
   
   self.change = function( id, act ) {
-    if( act ) {
-      var prev = self.changes[id]
-      if( prev ) {
-        if( 'MOD' === act ) {
-          if( 'ADD' === prev ) {
-            act = 'ADD'
-          }
+    var prev = self.changes[id]
+    if( prev ) {
+      if( 'MOD' === act ) {
+        if( 'ADD' === prev ) {
+          act = 'ADD'
         }
       }
+    }
 
-      self.changes[id] = act
-    }
-    else {
-      delete self.changes[id]
-    }
+    self.changes[id] = act
 
     store.setItem(changes_key,JSON.stringify(self.changes))
   }
 
+
+  self.cancelchange = function(id) {
+    delete self.changes[id]
+    store.setItem(changes_key,JSON.stringify(self.changes))
+  }
   
   self.sync = function(cb) {
     http.get(sync_base+'/version',function(res){
@@ -106,7 +112,7 @@ function DataCapsule( prefix,acc,coll,spec ) {
     function upload( res, update_ids ) {
       for( var i = 0; i < update_ids.length; i++ ) {
         var id = update_ids[i]
-        self.change(id)
+        self.cancelchange(id)
       }
 
       var change_ids = []
@@ -122,7 +128,7 @@ function DataCapsule( prefix,acc,coll,spec ) {
           var act = self.changes[id]
 
           function nextitem() {
-            self.change(id)
+            self.cancelchange(id)
             senditem(i+1)
           }
 
@@ -136,7 +142,7 @@ function DataCapsule( prefix,acc,coll,spec ) {
               item.id = id
               self.remove(item,function(err,item){
                 if( err ) return console.log(err);
-                self.change(id)
+                self.cancelchange(id)
                 server_item.act$ = 'ADD'
                 self.save(server_item,nextitem)
               })
@@ -153,7 +159,9 @@ function DataCapsule( prefix,acc,coll,spec ) {
           self.version = res.version
           store.setItem(version_key,''+self.version)
           store.setItem(ids_key,JSON.stringify(self.item_ids))
-          cb({down:update_ids,up:change_ids,ids:server_ids,version:self.version})
+          var out = {down:update_ids,up:change_ids,ids:server_ids,version:self.version}
+          console.log(out)
+          cb && cb(out)
         }
       }
       senditem(0)
@@ -178,10 +186,12 @@ function DataCapsule( prefix,acc,coll,spec ) {
 
     if( !item.id || 'ADD' === item.act$ ) {
       if( !item.id ) { 
-        item.id = ''+Math.random()
+        item.id = ( opt.makeid && opt.makeid(item) ) || ''+Math.random()
         act = 'ADD'
       }
-      self.item_ids.push(item.id)
+      if( !self.index[item.id] ) {
+        self.item_ids.push(item.id)
+      }
     }
 
     var key = self.key(item.id)
@@ -238,8 +248,8 @@ function DataCapsule( prefix,acc,coll,spec ) {
     var items = []
 
     function getitem(i) {
-      if( i < self.items_ids.length) {
-        self.load( self.items_ids[i], function(err,item) {
+      if( i < self.item_ids.length) {
+        self.load( self.item_ids[i], function(err,item) {
           if( err ) return console.log(err);
           items.push(item)
           getitem(i+1)

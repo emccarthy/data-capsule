@@ -17,6 +17,7 @@
 
   <script src="js/jquery.js"></script>
   <script src="js/jquery.mobile.js"></script>
+  <script src="js/jquery.countdown.js"></script>
   <script src="js/underscore.js"></script>
   <script src="js/backbone.js"></script>
   <script src="js/util.js"></script>
@@ -75,16 +76,13 @@
     <h1>Income</h1>
   </div>
 
-  <br>
+  <div data-role="content">
+    <div id="income_list" class="ui-grid-a">
+    </div>
 
-  <div class="ui-grid-a">
-    <div class="ui-block-a"><div class="month">Mar 2012</div></div>
-    <div class="ui-block-b"><input id="income_201203" type="text" class="amount" pattern="[0-9]*"></div>
-    <div class="ui-block-a"><div class="month">Apr 2012</div></div>
-    <div class="ui-block-b"><input id="income_201204" type="text" class="amount" pattern="[0-9]*"></div>
+    <h3>Last month is carried forward</h3>
+    <a id="income_more" data-role="button" style="font-size:0.9em">Add Month</a>
   </div>
-
-  <a id="income_more" data-role="button" style="font-size:0.9em">Add a Month</a>
 </div>
 
 
@@ -93,9 +91,42 @@
     <h1>Expenditure</h1>
   </div>
 
-  <a id="expend_more" data-role="button" style="font-size:0.9em">Add a Month</a>
+  <div data-role="content">
+    <div id="expend_list" class="ui-grid-a">
+    </div>
+
+    <h3>Last month is carried forward</h3>
+    <a id="expend_more" data-role="button" style="font-size:0.9em">Add Month</a>
+  </div>
 </div>
 
+
+<div style="hidden">
+
+<div id="ymwd_tm">
+  <div class="d{y10} year"></div><div class="d{y1}"></div>
+  <div class="sep"></div>
+  <div class="d{o10} month"></div><div class="d{o1}"></div>
+  <div class="sep"></div>
+  <div class="d{w10} week"></div><div class="d{w1}"></div>
+  <div class="sep"></div>
+  <div class="d{d10} day"></div><div class="d{d1}"></div>
+</div>
+
+<div id="hms_tm">
+  <div class="d{h10} hour"></div><div class="d{h1}"></div>
+  <div class="sep"></div>
+  <div class="d{m10} minute"></div><div class="d{m1}"></div>
+  <div class="sep"></div>
+  <div class="d{s10} second"></div><div class="d{s1}"></div>
+</div>
+
+<div id="entry_tm">
+  <div class="ui-block-a"><div class="monthentry"></div></div>
+  <div class="ui-block-b"><input type="text" class="amount" pattern="[0-9]*"></div>
+</div>
+
+</div>
 
 </body>
 </html>
