@@ -200,9 +200,8 @@ bb.init = function() {
       app.dc.save(entry,function(err,entry){
         if( err) return console.log(err);
 
-        self.rendermonth( entry )
+        self.render()
         app.model.state.trigger('entry-update')
-        app.dc.sync()
       })
     },
 
@@ -214,16 +213,18 @@ bb.init = function() {
       var input_amount = entry_div.find('.amount')
 
       input_amount.val(entry.amount).attr({id:self.type+'_'+entry.id}).blur(function(event){
+
         app.dc.load(entry.id, function(err,entry) {
           if( err) return console.log(err);
 
           entry.amount = parseInt(input_amount.val(),10)
+
           if( isNaN(entry.amount) ) {
             entry.amount = 0
             input_amount.val(0)
           }
 
-          app.dc.save(entry,function(err){
+          app.dc.save(entry,function(err,entry){
             if( err) return console.log(err);
 
             self.rendermonth( entry )
@@ -241,7 +242,7 @@ bb.init = function() {
 
 
 app.boot = function() {
-  //document.ontouchmove = function(e){ e.preventDefault(); }
+
 }
 
 app.start = function() {
